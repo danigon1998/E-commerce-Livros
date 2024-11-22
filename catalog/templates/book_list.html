@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Livros</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Lista de Livros</h1>
+
+    <!-- Formulario de filtro por categoría -->
+    <div class="filter-container">
+        <form method="get" action="">
+            <label for="category">Filtrar por categoría:</label>
+            <select name="category" id="category">
+                <option value="">Todas as categorías</option>
+                {% for category in categories %}
+                    <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Aplicar filtro</button>
+        </form>
+    </div>
+
+    <!-- Lista de libros -->
+    <div id="book-list" class="book-list">
+        {% for book in books %}
+        <div class="book">
+            {% if book.cover_image %}
+                <img src="{{ book.cover_image }}" alt="Portada de {{ book.title }}">
+            {% else %}
+                <img src="#" alt="No hay imagen disponible">
+            {% endif %}
+            <h2>{{ book.title }}</h2>
+            <p><strong>Autores:</strong>
+                {% if book.authors %}
+                    <ul style="list-style: none; padding: 0;">
+                        {% for author in book.authors %}
+                            <li>{{ author }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <span>Não há autores disponiveis.</span>
+                {% endif %}
+            </p>
+            <p><strong>Preço:</strong> ${{ book.price }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Botón para cargar más libros -->
+    <button id="load-more" data-offset="{{ next_offset }}">Cargar mais</button>
+
+    <script>
+        document.getElementById('load-more').addEventListener('click', function () {
+            const offset = this.getAttribute('data-offset');
+
+            fetch(`?offset=${offset}`)
+                .then(response => response.text())
+                .then(data => {
+                    // Crear un contenedor temporal y agregar el HTML recibido
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data;
+                    const newBooks = tempDiv.querySelectorAll('.book');
+                    
+                    // Agregar cada nuevo libro al contenedor principal
+                    const bookList = document.getElementById('book-list');
+                    newBooks.forEach(book => bookList.appendChild(book));
+
+                    // Actualizar el offset en el botón para la próxima carga
+                    const newOffset = tempDiv.querySelector('#load-more').getAttribute('data-offset');
+                    document.getElementById('load-more').setAttribute('data-offset', newOffset);
+
+                    // Si ya no hay más libros para cargar, ocultar el botón
+                    if (newBooks.length === 0) {
+                        document.getElementById('load-more').style.display = 'none';
+                    }
+                });
+        });
+    </script>
+</body>
+</html>
